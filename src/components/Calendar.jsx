@@ -1,11 +1,24 @@
 import React from "react";
 import dateFns from "date-fns";
 
+const defaultCalendarModes = ['Month', 'Week']
+
 class Calendar extends React.Component {
   state = {
     currentMonth: new Date(),
-    selectedDate: new Date()
+    currentWeek: new Date(),
+    selectedDate: new Date(),
+    calendarMode: defaultCalendarModes[0]
   };
+
+  renderModeOptions() {
+    return (
+        <div className="header row flex-middle">
+          <button onClick = {() => this.setCalendarMode(defaultCalendarModes[0])}>Month</button>
+          <button onClick = {() => this.setCalendarMode(defaultCalendarModes[1])}>Week</button>
+        </div>
+    )
+  }
 
   renderHeader() {
     const dateFormat = "MMMM YYYY";
@@ -25,6 +38,45 @@ class Calendar extends React.Component {
         </div>
       </div>
     );
+  }
+
+  renderHeaderWeekMode() {
+    //get current week that current day falls in DONE
+    //if forward:
+    // add 7 days to last day of current week
+    //
+    // if previous:
+    // subtract 7 days from first day of current week
+    const weekFormat = "dddd D"
+    const weekModeHeadingFormat = "MMM YYYY"
+    const days = []
+
+    let startDate = dateFns.startOfWeek(this.state.currentWeek);
+
+    for (let i = 0; i < 7; i++) {
+      days.push(
+        <div className="col col-center" key={i}>
+          {dateFns.format(dateFns.addDays(startDate, i), weekFormat)}
+        </div>
+      );
+    }
+
+    return (
+      <div className="header row flex-middle">
+
+        <div className="col col-start">
+          <div className="icon" onClick={this.prevWeek}>chevron_left</div>
+        </div>
+        <div className="col col-center">
+          <span>{dateFns.format(this.state.currentWeek, weekModeHeadingFormat)}</span>
+        </div>
+        <div className="col col-end" onClick={this.nextWeek}>
+          <div className="icon">chevron_right</div>
+        </div>
+        <div className="days row">{days}</div>
+
+      </div>
+    )
   }
 
   renderDays() {
@@ -88,6 +140,12 @@ class Calendar extends React.Component {
     return <div className="body">{rows}</div>;
   }
 
+  setCalendarMode = mode => {
+    this.setState({
+      calendarMode: mode
+    })
+  }
+
   onDateClick = day => {
     this.setState({
       selectedDate: day
@@ -100,18 +158,34 @@ class Calendar extends React.Component {
     });
   };
 
+  nextWeek = () => {
+    this.setState({
+      currentWeek: dateFns.addDays(this.state.currentWeek, 7)
+    });
+  };
+
   prevMonth = () => {
     this.setState({
       currentMonth: dateFns.subMonths(this.state.currentMonth, 1)
     });
   };
 
+  prevWeek = () => {
+    this.setState({
+      currentWeek: dateFns.subDays(this.state.currentWeek, 7)
+    });
+  };
+
   render() {
+    const { calendarMode } = this.state
     return (
       <div className="calendar">
-        {this.renderHeader()}
-        {this.renderDays()}
-        {this.renderCells()}
+        {this.renderModeOptions()}
+        {calendarMode === defaultCalendarModes[0] && this.renderHeader()}
+        {calendarMode === defaultCalendarModes[0] && this.renderDays()}
+        {calendarMode === defaultCalendarModes[0] && this.renderCells()}
+
+        {calendarMode === defaultCalendarModes[1] && this.renderHeaderWeekMode()}
       </div>
     );
   }
